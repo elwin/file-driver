@@ -8,8 +8,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/elwin/server"
+	"github.com/elwin/transmit/server"
 )
+
+var _ server.Driver = &FileDriver{}
 
 type FileDriver struct {
 	RootPath string
@@ -54,7 +56,7 @@ func (driver *FileDriver) ChangeDir(path string) error {
 	if f.IsDir() {
 		return nil
 	}
-	return errors.New("Not a directory")
+	return errors.New("not a directory")
 }
 
 func (driver *FileDriver) Stat(path string) (server.FileInfo, error) {
@@ -129,7 +131,7 @@ func (driver *FileDriver) DeleteDir(path string) error {
 	if f.IsDir() {
 		return os.Remove(rPath)
 	}
-	return errors.New("Not a directory")
+	return errors.New("not a directory")
 }
 
 func (driver *FileDriver) DeleteFile(path string) error {
@@ -141,7 +143,7 @@ func (driver *FileDriver) DeleteFile(path string) error {
 	if !f.IsDir() {
 		return os.Remove(rPath)
 	}
-	return errors.New("Not a file")
+	return errors.New("not a file")
 }
 
 func (driver *FileDriver) Rename(fromPath string, toPath string) error {
@@ -167,7 +169,7 @@ func (driver *FileDriver) GetFile(path string, offset int64) (int64, io.ReadClos
 		return 0, nil, err
 	}
 
-	f.Seek(offset, os.SEEK_SET)
+	f.Seek(offset, io.SeekStart)
 
 	return info.Size(), f, nil
 }
@@ -179,13 +181,13 @@ func (driver *FileDriver) PutFile(destPath string, data io.Reader, appendData bo
 	if err == nil {
 		isExist = true
 		if f.IsDir() {
-			return 0, errors.New("A dir has the same name")
+			return 0, errors.New("a dir has the same name")
 		}
 	} else {
 		if os.IsNotExist(err) {
 			isExist = false
 		} else {
-			return 0, errors.New(fmt.Sprintln("Put File error:", err))
+			return 0, errors.New(fmt.Sprintln("put file error:", err))
 		}
 	}
 
@@ -218,7 +220,7 @@ func (driver *FileDriver) PutFile(destPath string, data io.Reader, appendData bo
 	}
 	defer of.Close()
 
-	_, err = of.Seek(0, os.SEEK_END)
+	_, err = of.Seek(0, io.SeekEnd)
 	if err != nil {
 		return 0, err
 	}
